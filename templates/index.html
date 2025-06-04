@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV SmartCheck</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="hero-section">
+        <div class="circle-blur circle-blur-1"></div>
+        <div class="circle-blur circle-blur-2"></div>
+    </div>
+
+    <div class="container glass-container">
+        <div class="app-header">
+            <h1><i class="fas fa-file-alt"></i> CV SmartCheck</h1>
+            <p class="subtitulo">Evalúa tu currículum con IA y recibe sugerencias personalizadas</p>
+        </div>
+
+        <!-- Formulario inicial -->
+        {% if not resultado %}
+        <div id="mainForm" class="form-section">
+            <form action="/subir" method="post" enctype="multipart/form-data" id="uploadForm">
+                <div class="form-group">
+                    <label for="puestoSelect">
+                        <i class="fas fa-briefcase"></i> Selecciona el puesto deseado
+                    </label>
+                    <div class="select-wrapper">
+                        <select name="puesto" required id="puestoSelect">
+                            <option value="" disabled selected>-- Selecciona un puesto --</option>
+                            <option value="Desarrollador Full Stack">Desarrollador Full Stack</option>
+                            <option value="Ingeniero DevOps">Ingeniero DevOps</option>
+                            <option value="Especialista en Ciberseguridad">Especialista en Ciberseguridad</option>
+                            <option value="Ingeniero de Datos">Ingeniero de Datos</option>
+                            <option value="Científico de Datos / Machine Learning Engineer">Científico de Datos / ML Engineer</option>
+                            <option value="Administrador de Bases de Datos (DBA)">Administrador de Bases de Datos (DBA)</option>
+                            <option value="Arquitecto de Software">Arquitecto de Software</option>
+                            <option value="Ingeniero de Redes">Ingeniero de Redes</option>
+                            <option value="Desarrollador de Aplicaciones Móviles">Desarrollador de Aplicaciones Móviles</option>
+                            <option value="Ingeniero de Inteligencia Artificial / Deep Learning">Ingeniero de IA / Deep Learning</option>
+                            <option value="Ingeniero Cloud">Ingeniero Cloud</option>
+                            <option value="Ingeniero de Pruebas Automatizadas">Ingeniero de Pruebas Automatizadas</option>
+                            <option value="Consultor en Arquitectura Cloud">Consultor en Arquitectura Cloud</option>
+                            <option value="Administrador de Sistemas Linux/Unix">Administrador de Sistemas Linux/Unix</option>
+                            <option value="Especialista en Blockchain">Especialista en Blockchain</option>
+                            <option value="Ingeniero de Automatización">Ingeniero de Automatización</option>
+                            <option value="Desarrollador Front-End">Desarrollador Front-End</option>
+                            <option value="Ingeniero de Integración / API">Ingeniero de Integración / API</option>
+                            <option value="Ingeniero de Big Data">Ingeniero de Big Data</option>
+                            <option value="Ingeniero IoT">Ingeniero IoT</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="fileInput">
+                        <i class="fas fa-file-upload"></i> Sube tu currículum
+                    </label>
+                    <div class="file-drop-area" id="fileDrop">
+                        <span class="file-message">
+                            <!-- El contenido será reemplazado por JavaScript -->
+                        </span>
+                        <input type="file" name="archivo" accept=".pdf,.docx" required id="fileInput">
+                    </div>
+                    <div class="file-info" id="fileInfo"></div>
+                </div>
+
+                <button type="submit" class="submit-btn">
+                    <span class="btn-text"><i class="fas fa-rocket"></i> Evaluar CV</span>
+                    <span class="btn-icon"><i class="fas fa-arrow-right"></i></span>
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- Modal de progreso -->
+        <div id="progressModal" class="modal">
+            <div class="modal-content">
+                <div class="spinner-container">
+                    <div class="spinner"></div>
+                    <div class="spinner-text">Analizando tu currículum...</div>
+                    <div class="spinner-timer">Tiempo restante: <span id="countdown">7</span> segundos</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección de resultados -->
+        {% if resultado %}
+        <div id="resultadoContainer" class="resultado-container animate-in">
+            <div class="resultado-header">
+                <h2><i class="fas fa-chart-line"></i> Resultados para: {{ nombre }}</h2>
+                <div class="puntaje-container">
+                    <div class="puntaje-circle {% if resultado < 50 %}bajo{% elif resultado < 85 %}medio{% else %}alto{% endif %}">
+                        <div class="puntaje-number">{{ resultado }}</div>
+                        <div class="puntaje-label">Puntos</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tabs-container">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="detalles" onclick="openTab(event, 'detalles')">
+                        <i class="fas fa-list-alt"></i> Detalles
+                    </button>
+                    <button class="tab-btn" data-tab="recomendaciones" onclick="openTab(event, 'recomendaciones')">
+                        <i class="fas fa-lightbulb"></i> Recomendaciones
+                    </button>
+                    <button class="tab-btn" data-tab="preview" onclick="openTab(event, 'preview')">
+                        <i class="fas fa-eye"></i> Vista previa
+                    </button>
+                </div>
+
+                <div id="detalles" class="tab-content active">
+                    <div class="tabla-resultados glass-panel">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th><i class="fas fa-tag"></i> Sección</th>
+                                    <th><i class="fas fa-check"></i> Puntos</th>
+                                    <th><i class="fas fa-chart-bar"></i> Progreso</th>
+                                    <th><i class="fas fa-comment"></i> Comentario</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for seccion, puntos, total, comentario in detalles %}
+                                <tr class="{% if puntos < total * 0.5 %}bajo{% elif puntos < total * 0.85 %}medio{% else %}alto{% endif %}">
+                                    <td><strong>{{ seccion }}</strong></td>
+                                    <td>{{ puntos }} / {{ total }}</td>
+                                    <td>
+                                        <div class="progress-container">
+                                            <!-- Reemplaza la línea problemática por: -->
+                                            <div class="progress" data-puntos="{{ puntos }}" data-total="{{ total }}"></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if (puntos / total) >= 0.85 %}
+                                            ✅ Excelente{% if "BERT:" in comentario %} {{comentario}}{% endif %}
+                                        {% elif (puntos / total) >= 0.7 %}
+                                            ✅ Bueno{% if "BERT:" in comentario %} {{comentario}}{% endif %}
+                                        {% elif (puntos / total) >= 0.6 %}
+                                            ⚠️ Aceptable{% if "BERT:" in comentario %} {{comentario}}{% endif %}
+                                        {% elif (puntos / total) >= 0.4 %}
+                                            ⚠️ Regular{% if "BERT:" in comentario %} {{comentario}}{% endif %}
+                                        {% else %}
+                                            ❌ Deficiente{% if "BERT:" in comentario %} {{comentario}}{% endif %}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Dentro de la pestaña "Detalles" - Añadir después de la tabla de resultados -->
+                    {% if metricas_bert %}
+                    <div class="bert-metrics glass-panel">
+                        <h3><i class="fas fa-brain"></i> Análisis Semántico con BERT</h3>
+                        <p class="bert-intro">El modelo BERT evalúa la calidad semántica y relevancia contextual del contenido para el puesto seleccionado.</p>
+                        
+                        <table class="bert-table">
+                            <thead>
+                                <tr>
+                                    <th>Sección</th>
+                                    <th>Similitud Semántica</th>
+                                    <th>Nivel</th>
+                                    <th>Ajuste</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for metrica in metricas_bert %}
+                                <tr>
+                                    <td><strong>{{ metrica.seccion }}</strong></td>
+                                    <td>
+                                        <div class="similitud-container">
+                                            <div class="similitud-bar" data-similitud="{{ metrica.similitud }}"></div>
+                                            <span class="similitud-text">{{ metrica.similitud }}%</span>
+                                        </div>
+                                    </td>
+                                    <td>{{ metrica.nivel }}</td>
+                                    <td class="ajuste-bert {% if metrica.ajuste > 0 %}positivo{% elif metrica.ajuste < 0 %}negativo{% endif %}">
+                                        {{ '+' if metrica.ajuste > 0 else '' }}{{ metrica.ajuste }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        
+                        <div class="bert-explanation">
+                            <div class="explanation-title"><i class="fas fa-info-circle"></i> ¿Qué mide BERT?</div>
+                            <p>BERT analiza la calidad contextual y la similitud semántica entre el CV y un perfil ideal para el puesto seleccionado. A diferencia de un simple análisis de palabras clave, evalúa el significado, la relevancia y la sofisticación del contenido.</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div id="recomendaciones" class="tab-content">
+                    <div class="recomendaciones-container">
+                        <h3>Recomendaciones para <span class="highlight">{{ puesto }}</span></h3>
+                        <div class="recomendaciones-secciones">
+                            {% for recomendacion in recomendaciones %}
+                            <div class="reco-seccion glass-panel">
+                                <div class="reco-header">
+                                    <div class="reco-seccion-titulo">Recomendación {{ loop.index }}</div>
+                                    <div class="reco-indicador"></div>
+                                </div>
+                                <div class="reco-contenido">
+                                    <p>{{ recomendacion }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div id="preview" class="tab-content">
+                    <div class="preview-container glass-panel">
+                        <h3><i class="fas fa-file-alt"></i> Contenido extraído del CV</h3>
+                        <pre>{{ contenido_cv }}</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button class="action-btn" onclick="window.location.href='/'">
+                    <i class="fas fa-redo"></i> Evaluar otro CV
+                </button>
+                <button class="action-btn secondary" onclick="window.print()">
+                    <i class="fas fa-print"></i> Imprimir resultados
+                </button>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Sección de error -->
+        {% if error %}
+        <div class="error-container glass-panel animate-in">
+            <div class="error-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="error-message">
+                <h3>Error</h3>
+                <p>{{ error }}</p>
+            </div>
+            <button class="action-btn" onclick="window.location.href='/'">
+                <i class="fas fa-redo"></i> Intentar de nuevo
+            </button>
+        </div>
+        {% endif %}
+    </div>
+
+    <footer class="footer">
+        <p>CV SmartCheck © 2025 | Potenciado por IA</p>
+    </footer>
+
+    <!-- Cargar el archivo JavaScript externo -->
+    <script src="/static/app.js"></script>
+</body>
+</html>
