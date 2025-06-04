@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+python-multipart
+jinja2
+python-docx
+PyMuPDF
+torch --index-url https://download.pytorch.org/whl/cpu
+transformers
+scikit-learn
+numpy
+aiofiles
+sentencepiece
